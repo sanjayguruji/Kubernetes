@@ -21,9 +21,9 @@ apt-get update
 
 #3 - Installing kubernetes components
 Install kubeadm
-  apt install -y kubeadm=1.18.0-00
+  apt install -y kubeadm=1.29.0-00
 Install kubectl
-  apt install -y kubectl=1.18.0-00
+  apt install -y kubectl=1.29.0-00
 Install cri-o
   modprobe overlay
   modprobe br_netfilter
@@ -34,8 +34,8 @@ Create a file /etc/sysctl.d/99-mykubernetes-cri.conf, with these contents
 Run 
   sysctl --system
 Now create two environment variables
-  export OS=xUbuntu_20.04
-  export VERSION=1.18
+  export OS=xUbuntu_22.04
+  export VERSION=1.30
 
 Adding repos for cri-o and install cri-o
 
@@ -62,12 +62,18 @@ Start crio and enable it
   systemctl start crio
   systemctl status crio
   
-Install Kubelet. We need to tell kubelet that we are using "cri-o" as our container runtime, not docker.
-Create a file /etc/default/kubelet, with these contents
-  KUBELET_EXTRA_ARGS=--feature-gates="AllAlpha=false,RunAsGroup=true" --container-runtime=remote --cgroup-driver=systemd --container-runtime-endpoint='unix:///var/run/crio/crio.sock' --runtime-request-timeout=5m
- 
-Now install kubelet
-  apt install -y kubelet=1.18.0-00
+# Add Kubernetes APT repository and install required packages
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update -y
+sudo apt-get install -y kubelet="1.29.0-*" kubectl="1.29.0-*" kubeadm="1.29.0-*"
+sudo apt-get update -y
+sudo apt-get install -y jq
+
+sudo systemctl enable --now kubelet
+sudo systemctl start kubelet
+
   
 Install kubernetes-cni network
   apt-get install -y kubernetes-cni
@@ -82,8 +88,8 @@ Initialize kubernetes controller
 
 === Install overlay network - calico in our case
 
-  curl https://docs.projectcalico.org/manifests/calico.yaml -O
-  kubectl apply -f calico.yaml
+===Network Plugin = calico
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml
   
 Check the kubernetes control node status
   kubectl get nodes
