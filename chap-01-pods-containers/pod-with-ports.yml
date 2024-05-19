@@ -1,0 +1,16 @@
+# pod-with-ports.yml
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+  name: sanjay-webserver
+
+spec:
+  containers:
+    - name: sanjay-webserver
+      image: ngnix
+      ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
